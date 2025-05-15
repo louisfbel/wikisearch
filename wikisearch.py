@@ -1,15 +1,34 @@
-"""
-    wikisearch.py: wikipedia search app
-    Louis Belanger 5/14/25
-    contributions: https://www.mediawiki.org/wiki/API:Opensearch, ChatGPT
-    uses wikipedia action api opensearch module
-    to allow user to search wikipedia
-"""
+#!/usr/bin/python3
 
 import tkinter as tk
 import requests
+from html.parser import HTMLParser
 
-# return wikipedia article when submitted. Invalid requests defaut to random
+# HTML stripper class
+class HTMLStripper(HTMLParser):
+    def __init__(self):
+        super().__init__()
+        self.reset()
+        self.fed = []
+
+    def handle_data(self, d):
+        self.fed.append(d)
+
+    def get_data(self):
+        return ''.join(self.fed)
+
+def strip_html(html):
+    stripper = HTMLStripper()
+    stripper.feed(html)
+    return strip_erroneous(stripper.get_data())
+
+def strip_erroneous(html):
+    end = html.find("See also")
+    if end:
+        return html[0:end]
+    return html
+
+# return wikipedia article when submitted. Invalid requests default to random
 def on_submit():
     user_input = entry.get()
 
@@ -17,9 +36,12 @@ def on_submit():
     R = S.get(url=URL, params=PARAMS)
     DATA = R.json()
     body = DATA["query"]["pages"][0]["extract"]
-    print(body)
 
-    result_label.config(text=f"Request returned: \n{type(body)}\n{body}")
+    clean_text = strip_html(body)
+
+    # Clear previous text
+    text_box.delete("1.0", tk.END)
+    text_box.insert(tk.END, clean_text)
 
 # create session
 S = requests.Session()
@@ -34,22 +56,40 @@ PARAMS = {
     "formatversion": 2
 }
 
-# Create the main window
+# Main window
 root = tk.Tk()
 root.title("Wikisearch")
-root.geometry("600x300")
+root.geometry("600x400")
 
-# Create a textbox (entry widget)
-entry = tk.Entry(root, width=30)
-entry.pack(pady=10)
+title = tk.Label(root, text="Search Wikipedia")
+title.pack(pady=20)
 
-# Create a submit button
-submit_button = tk.Button(root, text="Submit", command=on_submit)
-submit_button.pack()
+# top frame
+top = tk.Frame(root)
+top.pack()
 
-# Create a label to display the result
-result_label = tk.Label(root, text="", wraplength=500)
-result_label.pack(pady=10)
+# Entry widget
+entry = tk.Entry(top, width=40)
+entry.pack(side=tk.LEFT)
+
+# Submit button
+submit_button = tk.Button(top, text="Search", command=on_submit)
+submit_button.pack(side=tk.LEFT)
+
+# Scrollable text area
+frame = tk.Frame(root)
+frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+scrollbar = tk.Scrollbar(frame)
+scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
+
+# text box
+text_box = tk.Text(frame, wrap=tk.WORD, yscrollcommand=scrollbar.set)
+text_box.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+scrollbar.config(command=text_box.yview)
+
+# Thank Wikipedia
+thank_box = tk.Label(root, text="Thank you, Wikipedia. I love you.")
+thank_box.pack(pady=10)
 
 # Run the application
 root.mainloop()
