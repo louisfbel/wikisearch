@@ -1,5 +1,6 @@
+#!/usr/bin/python3
+
 import tkinter as tk
-from tkinter import ttk
 import requests
 from html.parser import HTMLParser
 
@@ -60,13 +61,20 @@ root = tk.Tk()
 root.title("Wikisearch")
 root.geometry("600x400")
 
+title = tk.Label(root, text="Search Wikipedia")
+title.pack(pady=20)
+
+# top frame
+top = tk.Frame(root)
+top.pack()
+
 # Entry widget
-entry = tk.Entry(root, width=40)
-entry.pack(pady=10)
+entry = tk.Entry(top, width=40)
+entry.pack(side=tk.LEFT)
 
 # Submit button
-submit_button = tk.Button(root, text="Search", command=on_submit)
-submit_button.pack()
+submit_button = tk.Button(top, text="Search", command=on_submit)
+submit_button.pack(side=tk.LEFT)
 
 # Scrollable text area
 frame = tk.Frame(root)
